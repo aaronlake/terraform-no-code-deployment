@@ -27,7 +27,8 @@ def cli():
     parser.add_argument(
         "-u",
         "--url",
-        help="Terraform Enterprise URL, blank for Terraform Cloud",
+        help="Terraform Enterprise URL blank for Terraform Cloud "
+        + "(https://app.terraform.io/api/v2)",
         default="https://app.terraform.io/api/v2",
     )
     parser.add_argument(
@@ -48,8 +49,8 @@ def cli():
     )
 
     parser.add_argument(
-        "-f",
-        "--file",
+        "-v",
+        "--variables",
         help="Path to .tfvars file containing variables "
         + "to be set in the workspace",
     )
@@ -111,7 +112,7 @@ def variable_payload(key, value, sensitive, description, workspace_id):
                 "description": description,
                 "category": "terraform",
                 "hcl": "false",
-                "sentinel": sensitive,
+                "sensitive": sensitive,
             },
             "relationships": {
                 "workspace": {"data": {"id": workspace_id, "type": "workspaces"}}
@@ -126,12 +127,15 @@ def put_variables(args, workspace_id):
     """Create a new Terraform Enterprise Workspace"""
     url = format_url(args.url) + "/vars"
 
-    tfv = tfvars.LoadSecrets(args.file)
+    tfv = tfvars.LoadSecrets(args.variables)
 
     for key, value in tfv.items():
         payload = variable_payload(key, value, "false", "", workspace_id)
         response = requests.post(url, headers=HEADERS, json=payload, timeout=30)
-        print(response)
+
+    if response.status_code != 201:
+        print(response.json())
+        sys.exit(1)
 
     if args.sensitive:
         tfv = tfvars.LoadSecrets(args.sensitive)
@@ -139,7 +143,35 @@ def put_variables(args, workspace_id):
         for key, value in tfv.items():
             payload = variable_payload(key, value, "true", "", workspace_id)
             response = requests.post(url, headers=HEADERS, json=payload, timeout=30)
-            print(response)
+
+    if response.status_code != 201:
+        print(response.json())
+        sys.exit(1)
+
+
+def create_run(args, workspace_id):
+    """Apply a Terraform Enterprise Workspace"""
+    url = format_url(args.url) + "/runs"
+    payload = {
+        "data": {
+            "type": "runs",
+            "attributes": {"auto-apply": "true"},
+            "relationships": {
+                "workspace": {"data": {"id": workspace_id, "type": "workspaces"}}
+            },
+        }
+    }
+
+    print(url)
+    print(payload)
+
+    response = requests.post(url, headers=HEADERS, json=payload, timeout=30)
+
+    if response.status_code != 201:
+        print(response.json())
+        sys.exit(1)
+
+    return response.json().get("data").get("id")
 
 
 def main():
@@ -155,6 +187,16 @@ def main():
     args = cli()
     workspace = create_workspace(args)
     put_variables(args, workspace)
+    print(workspace)
+    run_id = create_run(args, workspace)
+
+    output = {
+        "workspace": workspace,
+        "run_id": run_id,
+        "url": f"{format_url(args.url)}/app/{TFC_ORG}/workspaces/{workspace}/runs/{run_id}",
+    }
+
+    print(output)
 
 
 if __name__ == "__main__":
