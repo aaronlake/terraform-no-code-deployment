@@ -162,9 +162,6 @@ def create_run(args, workspace_id):
         }
     }
 
-    print(url)
-    print(payload)
-
     response = requests.post(url, headers=HEADERS, json=payload, timeout=30)
 
     if response.status_code != 201:
