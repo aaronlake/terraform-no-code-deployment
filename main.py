@@ -189,7 +189,6 @@ def main():
     args = cli()
     workspace = create_workspace(args)
     put_variables(args, workspace)
-    print(workspace)
     run_id = create_run(args, workspace)
 
     output = {
