@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import re
 import sys
 import uuid
 import requests
@@ -69,6 +70,10 @@ def format_url(url):
     """Format URL for API calls"""
     if url is None:
         url = "https://app.terraform.io/api/v2"
+
+    if not re.match(r"^http[s]?:\/\/.*?\/api\/v2", url):
+        print("Invalid URL: must start with http[s] and end with /api/v2")
+        sys.exit(1)
 
     return url.rstrip("/")
 
