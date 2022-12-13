@@ -1,6 +1,6 @@
 # Terraform No-Code Deployment Script
 
-This script is designed to be an example method for deploying a Terraform configuration using (No-Code)[hashi.co/nocode]. This is not intended to be used in production, but rather as a reference for how to leverage no-code in your own workflows.
+This script is designed to be an example method for deploying a Terraform configuration using [No-Code](hashi.co/nocode). This is not intended to be used in production, but rather as a reference for how to leverage no-code in your own workflows.
 
 ## Prerequisites
 
