@@ -12,7 +12,7 @@ Install Python dependencies:
 pip install -r requirements.txt
 ```
 
-Export your Terraform Cloud API and Organization tokens:
+Export your Terraform Cloud Token and Organization name:
 
 ```bash
 export TFC_TOKEN=...
