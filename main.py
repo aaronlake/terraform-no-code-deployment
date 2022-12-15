@@ -129,29 +129,25 @@ def variable_payload(key, value, sensitive, description, workspace_id):
 
 
 def put_variables(args, workspace_id):
-    """Create a new Terraform Enterprise Workspace"""
+    """Insert variables to Terraform Workspace"""
     url = format_url(args.url) + "/vars"
 
-    tfv = tfvars.LoadSecrets(args.variables)
+    for var_file, sensitive in {
+        args.variables: "false",
+        args.sensitive: "true",
+    }.items():
+        if not var_file:
+            continue
 
-    for key, value in tfv.items():
-        payload = variable_payload(key, value, "false", "", workspace_id)
-        response = requests.post(url, headers=HEADERS, json=payload, timeout=30)
-
-    if response.status_code != 201:
-        print(response.json())
-        sys.exit(1)
-
-    if args.sensitive:
-        tfv = tfvars.LoadSecrets(args.sensitive)
+        tfv = tfvars.LoadSecrets(var_file)
 
         for key, value in tfv.items():
-            payload = variable_payload(key, value, "true", "", workspace_id)
+            payload = variable_payload(key, value, sensitive, "", workspace_id)
             response = requests.post(url, headers=HEADERS, json=payload, timeout=30)
 
-    if response.status_code != 201:
-        print(response.json())
-        sys.exit(1)
+            if response.status_code != 201:
+                print(response.json())
+                sys.exit(1)
 
 
 def create_run(args, workspace_id):
